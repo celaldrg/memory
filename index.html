@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Memory · Card-matching game</title>
+  <meta name="description" content="Memory is a card-matching game for the browser: original artwork, three board sizes, one or two players and a best-result record. Free and open source.">
+  <meta name="theme-color" content="#0f172a">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Memory">
+  <meta property="og:description" content="Flip two cards, find the pairs. A card-matching game for the browser with original artwork, three board sizes and a two-player mode.">
+  <meta property="og:url" content="https://celaldrg.github.io/memory/">
+  <meta property="og:image" content="https://celaldrg.github.io/memory/docs/screenshot.png">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20x='6'%20y='12'%20width='32'%20height='42'%20rx='8'%20fill='%236d28d9'%20transform='rotate(-12%2022%2033)'/%3E%3Crect%20x='24'%20y='9'%20width='32'%20height='44'%20rx='8'%20fill='%238b5cf6'/%3E%3Cpolygon%20points='40%2020%2042.5%2026.6%2049.5%2026.9%2044%2031.3%2045.9%2038.1%2040%2034.2%2034.1%2038.1%2036%2031.3%2030.5%2026.9%2037.5%2026.6'%20fill='%23fde047'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="src/main.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+          <rect x="6" y="12" width="32" height="42" rx="8" fill="#6d28d9" transform="rotate(-12 22 33)"/>
+          <rect x="24" y="9" width="32" height="44" rx="8" fill="#8b5cf6"/>
+          <polygon points="40 20 42.5 26.6 49.5 26.9 44 31.3 45.9 38.1 40 34.2 34.1 38.1 36 31.3 30.5 26.9 37.5 26.6" fill="#fde047"/>
+        </svg>
+        <h1 data-i18n="title">Memory</h1>
+      </div>
+
+      <dl class="stats">
+        <div class="tile">
+          <dt data-i18n="moves">Moves</dt>
+          <dd id="stat-moves">0</dd>
+        </div>
+        <div class="tile">
+          <dt data-i18n="time">Time</dt>
+          <dd id="stat-time">0:00</dd>
+        </div>
+        <div class="tile" id="best-tile" title="Best solo result on this board: fewest moves, then fastest time" data-i18n-title="bestHint">
+          <dt data-i18n="best">Best</dt>
+          <dd id="stat-best">—</dd>
+        </div>
+      </dl>
+
+      <div class="turnbar">
+        <div class="progress-row" id="solo-bar">
+          <span class="turn-label" id="pairs-label" data-i18n="pairs">Pairs</span>
+          <span class="progress" id="progress" role="progressbar" aria-labelledby="pairs-label" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0"><span class="progress-fill"></span></span>
+          <strong class="pairs-value" id="pairs-value">0 / 8</strong>
+        </div>
+        <div class="players-row" id="duo-bar" hidden>
+          <div class="player" id="player-0" data-player="0"><span class="dot"></span><span class="name">Player 1</span><strong class="score">0</strong></div>
+          <div class="player" id="player-1" data-player="1"><span class="dot"></span><span class="name">Player 2</span><strong class="score">0</strong></div>
+        </div>
+      </div>
+
+      <div class="settings">
+        <label class="tile select-tile">
+          <span data-i18n="board">Board</span>
+          <select id="size-select"></select>
+        </label>
+        <label class="tile select-tile">
+          <span data-i18n="players">Players</span>
+          <select id="players-select"></select>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="new-game" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span data-i18n="newGame">New game</span>
+        </button>
+        <button type="button" id="lang-toggle" class="btn btn-lang" aria-label="TR: switch to Turkish" data-i18n="languageButton" data-i18n-label="languageLabel">TR</button>
+      </div>
+    </header>
+
+    <main class="play">
+      <div class="board-wrap">
+        <div id="board" class="board" role="group" aria-label="Cards" data-i18n-label="cards"></div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p class="hint" data-i18n="hint">Arrow keys move · Enter or Space flips</p>
+      <p class="credits">MIT · <a href="https://github.com/celaldrg/memory" data-i18n="source">Source on GitHub</a></p>
+    </footer>
+  </div>
+
+  <p id="announcer" class="sr-only" aria-live="polite"></p>
+
+  <dialog id="win-dialog" class="win" aria-labelledby="win-title" aria-describedby="win-text">
+    <div class="confetti" aria-hidden="true"></div>
+    <div class="win-card">
+      <p class="win-badge" id="win-badge" data-i18n="newBest" hidden>New best!</p>
+      <h2 id="win-title">You won!</h2>
+      <p class="win-text" id="win-text"></p>
+      <dl class="win-stats" id="win-stats"></dl>
+      <div class="win-actions">
+        <button type="button" class="btn btn-primary" id="win-again" data-i18n="playAgain">Play again</button>
+        <button type="button" class="btn" id="win-close" data-i18n="close">Close</button>
+      </div>
+    </div>
+  </dialog>
+</body>
+</html>

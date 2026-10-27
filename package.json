@@ -1,0 +1,11 @@
+{
+  "name": "memory",
+  "version": "1.0.0",
+  "description": "A card-matching memory game for the browser: three board sizes, one or two players, original SVG cards, no dependencies.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}
